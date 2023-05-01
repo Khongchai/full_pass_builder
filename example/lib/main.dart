@@ -47,13 +47,18 @@ class _MyAppState extends State<MyApp> {
                           ElevatedButton(onPressed: _addText, child: const Text("Sticky Button::Click to Add More Space")),
                           ..._textList,
                         ],
+                        // Consider this declarative API.
+                        // layouter.allMid()..aggregateHeight()..done();
+                        // layouter.allMid()..aggregateHeight()..done();
+                        // layouter.each((childSize, setChildOffset
+                       //
                         // Decides how to position children.
                         // TODO @khongchai this migth be a better API
                         // layoutAndSizing: (layouter) {
                         //    layouter.constraints
                         //    layouter.sizes
                         //    layouter.offsets
-                        //    layouter.forEachChild((childSize, setChildOffset) => {});
+                        //    layouter.setOffsetForEachChild(Offset Function(Size childSize));
                         //    layouter.maxChildSize
                         //    layouter.minChildSize
                         //    layouter.utils.allMid() => Size
