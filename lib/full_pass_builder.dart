@@ -10,7 +10,8 @@ import 'package:flutter/rendering.dart';
 
 import 'child_size_and_parent_offset.dart';
 
-typedef WidgetLayouter = Size Function(BoxConstraints constraints,
+typedef WidgetLayouter = Size Function(
+    BoxConstraints constraints,
     List<ChildSizeAndOffset> childrenSizesAndOffsets);
 
 class FullPassBuilder extends StatelessWidget {
@@ -27,7 +28,7 @@ class FullPassBuilder extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) => FlexibleLayoutBuilder(
         children: childrenBuilder(context, constraints),
-        positioner: layoutAndSizing,
+        layoutAndSizing: layoutAndSizing,
       ),
     );
   }
@@ -42,29 +43,29 @@ class FullPassBuilder extends StatelessWidget {
 ///
 /// With LayoutBuilder, you only get the constraints from the parent.
 class FlexibleLayoutBuilder extends MultiChildRenderObjectWidget {
-  final WidgetLayouter positioner;
+  final WidgetLayouter layoutAndSizing;
 
   FlexibleLayoutBuilder(
-      {required List<Widget> children, required this.positioner, Key? key})
+      {required List<Widget> children, required this.layoutAndSizing, Key? key})
       : super(key: key, children: children);
 
   @override
   RenderObject createRenderObject(BuildContext context) {
     return ChildrenGeometriesProviderRenderObject(
-      customLayouter: positioner,
+      customLayouter: layoutAndSizing,
     );
   }
 
   @override
   void updateRenderObject(BuildContext context,
       ChildrenGeometriesProviderRenderObject renderObject) {
-    renderObject.customLayouter = positioner;
+    renderObject.customLayouter = layoutAndSizing;
   }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(StringProperty('positioner', positioner.toString()));
+    properties.add(StringProperty('positioner', layoutAndSizing.toString()));
     properties.add(StringProperty('children', children.toString()));
   }
 }
