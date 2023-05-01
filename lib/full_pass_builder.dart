@@ -5,8 +5,6 @@ export "package:full_pass_builder/full_pass_builder.dart";
 export "package:full_pass_builder/helpers.dart";
 export "package:full_pass_builder/child_size_and_parent_offset.dart";
 
-import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
 
@@ -16,12 +14,12 @@ typedef WidgetLayouter = Size Function(BoxConstraints constraints,
     List<ChildSizeAndOffset> childrenSizesAndOffsets);
 
 class FullPassBuilder extends StatelessWidget {
-  final WidgetLayouter positioner;
+  final WidgetLayouter layoutAndSizing;
   final List<Widget> Function(BuildContext context, BoxConstraints constraints)
       childrenBuilder;
 
   const FullPassBuilder(
-      {required this.positioner, required this.childrenBuilder, Key? key})
+      {required this.layoutAndSizing, required this.childrenBuilder, Key? key})
       : super(key: key);
 
   @override
@@ -29,7 +27,7 @@ class FullPassBuilder extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) => FlexibleLayoutBuilder(
         children: childrenBuilder(context, constraints),
-        positioner: positioner,
+        positioner: layoutAndSizing,
       ),
     );
   }

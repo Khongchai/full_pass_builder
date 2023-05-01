@@ -48,7 +48,22 @@ class _MyAppState extends State<MyApp> {
                           ..._textList,
                         ],
                         // Decides how to position children.
-                        positioner: (constraints, sizesAndOffsets) {
+                        // TODO @khongchai this migth be a better API
+                        // layoutAndSizing: (layouter) {
+                        //    layouter.constraints
+                        //    layouter.sizes
+                        //    layouter.offsets
+                        //    layouter.forEachChild((childSize, setChildOffset) => {});
+                        //    layouter.maxChildSize
+                        //    layouter.minChildSize
+                        //    layouter.utils.allMid() => Size
+                        //    layouter.utils.allStart() => Size
+                        //    layouter.utils.allEnd() => Size
+                        //    layouter.utils.zigZag() => Size
+                        //    layouter.utils.lastElementSticky() => Size
+                        //    layouter.utils.lastElementConditionalSticky() => Size
+                        // }
+                        layoutAndSizing: (constraints, sizesAndOffsets) {
                           double heightSoFar = 0;
                           double maxWidth = 0;
 
