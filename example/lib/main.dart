@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import "package:full_pass_builder/full_pass_builder.dart";
 
@@ -14,7 +16,6 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final List<Text> _textList = [
-    const Text("Hello"),
     const Text("Hello"),
   ];
 
@@ -39,23 +40,31 @@ class _MyAppState extends State<MyApp> {
             Scaffold(
                 body: SafeArea(
                     child: Container(
-          color: Colors.red.withOpacity(0.2),
-          child: FullPassBuilder(
-            children: [
-              ..._textList,
-              GestureDetector(
-                  onTap: _addText,
-                  child: const Text("Sticky Button::Click to add more space")),
-            ],
-            // Decides how to position children.
-            positioner: (constraints, sizesAndOffsets) {
-              for (final s in sizesAndOffsets) {
-                s.offset = Offset.zero;
-              }
-              sizesAndOffsets.last.offset = const Offset(0, 10);
-            },
-          ),
-        ))
+                      color: Colors.red.withOpacity(0.2),
+                      child: FullPassBuilder(
+                        childrenBuilder: (context, constraints) => [
+                          ..._textList,
+                          ElevatedButton(onPressed: _addText, child: const Text("Sticky Button::Click to Add More Space")),
+                          ..._textList,
+                        ],
+                        // Decides how to position children.
+                        positioner: (constraints, sizesAndOffsets) {
+                          double heightSoFar = 0;
+                          double maxWidth = 0;
+
+                          for (int i = 0; i < sizesAndOffsets.length; i++) {
+                            maxWidth = max(sizesAndOffsets[i].getSize().width, maxWidth);
+                          }
+
+                          for (int i = 0; i < sizesAndOffsets.length; i++) {
+                            sizesAndOffsets[i].offset = Offset(0, heightSoFar);
+                            heightSoFar += sizesAndOffsets[i].getSize().height;
+                          }
+
+                          return Size(maxWidth, heightSoFar);
+                        },
+                      ),
+                    ))
                 // When the widget has the information of all its children
                 // bottomUp: (parentConstraints, childrenGeometries) => [])),
                 ));

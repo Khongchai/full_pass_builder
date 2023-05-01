@@ -1,5 +1,10 @@
 library full_pass_builder;
 
+// TODO @khongchai separate exports into a separate file.
+export "package:full_pass_builder/full_pass_builder.dart";
+export "package:full_pass_builder/helpers.dart";
+export "package:full_pass_builder/child_size_and_parent_offset.dart";
+
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
@@ -7,30 +12,55 @@ import 'package:flutter/rendering.dart';
 
 import 'child_size_and_parent_offset.dart';
 
-export "package:full_pass_builder/full_pass_builder.dart";
-
-typedef WidgetPositioner = void Function(BoxConstraints constraints,
+typedef WidgetLayouter = Size Function(BoxConstraints constraints,
     List<ChildSizeAndOffset> childrenSizesAndOffsets);
 
-/// A widget that exposes its layout calculation to the children.
-class FullPassBuilder extends MultiChildRenderObjectWidget {
-  final WidgetPositioner positioner;
+class FullPassBuilder extends StatelessWidget {
+  final WidgetLayouter positioner;
+  final List<Widget> Function(BuildContext context, BoxConstraints constraints)
+      childrenBuilder;
 
-  FullPassBuilder(
+  const FullPassBuilder(
+      {required this.positioner, required this.childrenBuilder, Key? key})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => FlexibleLayoutBuilder(
+        children: childrenBuilder(context, constraints),
+        positioner: positioner,
+      ),
+    );
+  }
+}
+
+/// A widget that exposes its layout calculation to the children.
+///
+/// With this widget, you get data widgets such as Column and Row have access to:
+/// the geometries of the children.
+/// With the geometries, you can arbitrarily position your children however you
+/// wish.
+///
+/// With LayoutBuilder, you only get the constraints from the parent.
+class FlexibleLayoutBuilder extends MultiChildRenderObjectWidget {
+  final WidgetLayouter positioner;
+
+  FlexibleLayoutBuilder(
       {required List<Widget> children, required this.positioner, Key? key})
       : super(key: key, children: children);
 
   @override
   RenderObject createRenderObject(BuildContext context) {
     return ChildrenGeometriesProviderRenderObject(
-      positioner: positioner,
+      customLayouter: positioner,
     );
   }
 
   @override
   void updateRenderObject(BuildContext context,
       ChildrenGeometriesProviderRenderObject renderObject) {
-    renderObject.positioner = positioner;
+    renderObject.customLayouter = positioner;
   }
 
   @override
@@ -49,10 +79,11 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
         ContainerRenderObjectMixin<RenderBox,
             ChildGeometriesProviderParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox,
-            ChildGeometriesProviderParentData> {
-  WidgetPositioner positioner;
+            ChildGeometriesProviderParentData>,
+        DebugOverflowIndicatorMixin {
+  WidgetLayouter customLayouter;
 
-  ChildrenGeometriesProviderRenderObject({required this.positioner});
+  ChildrenGeometriesProviderRenderObject({required this.customLayouter});
 
   @override
   double computeMinIntrinsicWidth(double height) => 0.0;
@@ -64,6 +95,11 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
       totalWidth += child.size.width;
     });
     return totalWidth;
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    return defaultHitTestChildren(result, position: position);
   }
 
   @override
@@ -83,40 +119,22 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
     size = computeDryLayout(constraints);
   }
 
-  // Return size of zero if no children, else take up the full constraints.
   @override
   Size computeDryLayout(BoxConstraints constraints) {
     List<ChildSizeAndOffset> sizesAndOffsets = [];
     forEachChild((child) {
       final size = ChildLayoutHelper.layoutChild(child, constraints);
 
-      sizesAndOffsets
-          .add(ChildSizeAndOffset(size: size, parentData: child.parentData as ChildGeometriesProviderParentData));
+      sizesAndOffsets.add(ChildSizeAndOffset(
+          size, child.parentData as ChildGeometriesProviderParentData));
     });
 
-    positioner(constraints, sizesAndOffsets);
-
-    double totalWidth = 0;
-    double totalHeight = 0;
-    double elementMaxWidth = 0;
-    double elementMaxHeight = 0;
-    for (final s in sizesAndOffsets) {
-      elementMaxWidth = max(elementMaxWidth, s.size.width);
-      elementMaxHeight = max(elementMaxHeight , s.size.height);
-      totalWidth += s.offset.dx;
-      totalHeight += s.offset.dy;
-    }
-    totalWidth += elementMaxWidth;
-    totalHeight += elementMaxHeight;
-
-    return constraints.constrain(Size(totalWidth, totalHeight));
+    return constraints.constrain(customLayouter(constraints, sizesAndOffsets));
   }
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    forEachChild((child) {
-      context.paintChild(child, offset);
-    });
+    defaultPaint(context, offset);
   }
 
   @override
@@ -134,6 +152,4 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
       child = parentData.nextSibling;
     }
   }
-
-  // TODO @khongchai hit testing
 }
