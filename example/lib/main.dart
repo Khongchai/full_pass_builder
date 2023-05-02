@@ -55,53 +55,49 @@ class _MyAppState extends State<MyApp> {
                             "Sticky Button::Click to Add More Space")),
                   ],
                   // Consider this declarative API.
-                  // layouter.allMid()..aggregateHeight()..done();
-                  // layouter.allMid()..aggregateHeight()..done();
-                  // layouter.each((childSize, setChildOffset
-                  //
                   // Decides how to position children.
                   // TODO @khongchai this migth be a better API
-                  // layoutAndSizing: (layouter) {
-                  //    layouter.constraints
-                  //    layouter.sizes
-                  //    layouter.offsets
-                  //    layouter.setOffsetForEachChild(Offset Function(Size childSize));
-                  //    layouter.maxChildSize
-                  //    layouter.minChildSize
-                  //    layouter.utils.allMid() => Size
-                  //    layouter.utils.allStart() => Size
-                  //    layouter.utils.allEnd() => Size
-                  //    layouter.utils.zigZag() => Size
-                  //    layouter.utils.lastElementSticky() => Size
-                  //    layouter.utils.lastElementConditionalSticky() => Size
+                  // layoutAndSizing: (ctx, layouter) {
+                  // TODO @khongchai
+                  // These things should be a separate class
+                  //    return composer.setHorizontal()
+                  //            ..moveHalfDown()
+                  //            ..forEachChild((childSize, setChildOffset) => Size)
+                  //            ..
+                  //            .compose();
+                  //    layouter.template.allMid() => Size
+                  //    layouter.template.allStart() => Size
+                  //    layouter.template.allEnd() => Size
+                  //    layouter.template.masonry() =>
+                  //    layouter.template.parallax() =>
+                  //    layouter.template.zigZag() => Size
+                  //    layouter.template.sticky() => Size
+                  //    layouter.template.stickyFooter() => Size
                   // }
-                  layoutAndSizing: (constraints, sizesAndOffsets) {
+                  layoutAndSizing: (layouter) {
                     double heightSoFar = 0;
-                    double maxWidth = 0;
-
-                    for (int i = 0; i < sizesAndOffsets.length; i++) {
-                      maxWidth =
-                          max(sizesAndOffsets[i].getSize().width, maxWidth);
-                    }
-
-                    for (int i = 0; i < sizesAndOffsets.length; i++) {
-                      // if is last
-                      if (i == sizesAndOffsets.length - 1) {
+                    layouter.forEachChild((constraints, size, offset, index) {
+                      // Is last
+                      if (layouter.childCount - 1 == index) {
                         final fixedBottom = MediaQuery.of(context).size.height -
                             MediaQuery.of(context).padding.top -
-                            sizesAndOffsets[i].getSize().height;
+                            size.height;
                         final contentBottom =
                             heightSoFar + MediaQuery.of(context).padding.top;
-                        sizesAndOffsets[i].offset =
+                        offset.set =
                             Offset(0, (max(fixedBottom, contentBottom)));
                       } else {
-                        sizesAndOffsets[i].offset = Offset(0, heightSoFar);
-                        heightSoFar += sizesAndOffsets[i].getSize().height;
+                        offset.set = Offset(0, heightSoFar);
+                        heightSoFar += size.height;
                       }
-                    }
+                    });
 
-                    return Size(maxWidth,
-                        max(sizesAndOffsets.last.offset.dy + sizesAndOffsets.last.getSize().height, MediaQuery.of(context).size.height));
+                    return Size(
+                        layouter.maxRectangle.width,
+                        max(
+                            layouter.childrenParentData.last.offset.dy +
+                                layouter.childrenSizes.last.height,
+                            MediaQuery.of(context).size.height));
                   },
                 ),
               );
