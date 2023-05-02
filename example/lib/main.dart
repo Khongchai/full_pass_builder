@@ -88,10 +88,12 @@ class _MyAppState extends State<MyApp> {
                       // if is last
                       if (i == sizesAndOffsets.length - 1) {
                         final fixedBottom = MediaQuery.of(context).size.height -
-                            MediaQuery.of(context).padding.top - sizesAndOffsets[i].getSize().height;
-                        final contentBottom = heightSoFar + MediaQuery.of(context).padding.top;
+                            MediaQuery.of(context).padding.top -
+                            sizesAndOffsets[i].getSize().height;
+                        final contentBottom =
+                            heightSoFar + MediaQuery.of(context).padding.top;
                         sizesAndOffsets[i].offset =
-                            Offset(0, (max(fixedBottom, contentBottom) ));
+                            Offset(0, (max(fixedBottom, contentBottom)));
                       } else {
                         sizesAndOffsets[i].offset = Offset(0, heightSoFar);
                         heightSoFar += sizesAndOffsets[i].getSize().height;
@@ -99,7 +101,7 @@ class _MyAppState extends State<MyApp> {
                     }
 
                     return Size(maxWidth,
-                        max(heightSoFar, MediaQuery.of(context).size.height));
+                        max(sizesAndOffsets.last.offset.dy + sizesAndOffsets.last.getSize().height, MediaQuery.of(context).size.height));
                   },
                 ),
               );
