@@ -10,7 +10,6 @@ final FullPassBuilderFactory fullPassBuilderFactory =
 
 /// Sets of layout templates that conforms to the [LayouterVisitorWithContext] interface.
 ///
-/// TODO masonry, parallax, the text thing.
 class FullPassBuilderFactory {
   static final FullPassBuilderFactory _instance = FullPassBuilderFactory._();
 
@@ -46,13 +45,12 @@ class FullPassBuilderFactory {
         layouterVisitor: (context, layouter) {
           double heightSoFar = 0;
           layouter.forEachChild((constraints, size, offset, index) {
+            final mdof = MediaQuery.of(context);
             // Is last
             if (layouter.childCount - 1 == index) {
-              final fixedBottom = MediaQuery.of(context).size.height -
-                  MediaQuery.of(context).padding.top -
-                  size.height;
-              final contentBottom =
-                  heightSoFar + MediaQuery.of(context).padding.top;
+              final fixedBottom =
+                  mdof.size.height - mdof.padding.top - size.height;
+              final contentBottom = heightSoFar + mdof.padding.top;
               offset.set = Offset(0, (max(fixedBottom, contentBottom)));
             } else {
               offset.set = Offset(0, heightSoFar);
@@ -71,5 +69,45 @@ class FullPassBuilderFactory {
               ...childrenBuilder(context, constraints),
               stickyChildBuilder(context, constraints)
             ]);
+  }
+
+  /// Your standard masonry-style UI.
+  FullPassBuilder verticalMasonry(
+      {required double verticalGap,
+      required double horizontalGap,
+      required List<List<Widget>> Function(BuildContext context)
+          masonryBuilder}) {
+    // Each integer represents the number of member in a stack.
+    final List<int> stackSizes = [];
+    return FullPassBuilder(layouterVisitor: (context, layouter) {
+      // Stack is like either a row or a column
+      int stackIndex = 0;
+      int childrenCountInPreviousStacks = 0;
+      layouter.forEachChild((constraints, size, offset, childIndex) {
+        // Whether or not we have reached a new masonry stack.
+        if (stackSizes[stackIndex] - 1 <=
+            (childIndex - childrenCountInPreviousStacks)) {
+          childrenCountInPreviousStacks += stackSizes[stackIndex];
+          // TODO @khongchai
+          // Do something before resetting the stack index.
+          stackIndex++;
+        }
+      });
+      return MediaQuery.of(context).size;
+    }, childrenBuilder: (context, constraints) {
+      final widgets = masonryBuilder(context);
+      widgets.forEach((e) => stackSizes.add(e.length));
+      return widgets.expand((element) => element).toList(growable: false);
+    });
+  }
+
+  // TODO @khongchai implement this and find out how to do rotation.
+  FullPassBuilder random(
+      {required Size bound,
+      required Offset center,
+      required List<Widget> Function(BuildContext context) childrenBuilder,
+      bool rotate = false}) {
+    return FullPassBuilder(
+        layouterVisitor: layouterVisitor, childrenBuilder: childrenBuilder);
   }
 }

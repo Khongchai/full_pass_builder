@@ -31,20 +31,42 @@ typedef LayouterVisitorWithContext = Size Function(
 /// of getting the layout details post-render, all details are obtained within
 /// the same frame.
 ///
+/// This is guaranteed to be called after [childrenBuilder], this means that you
+/// can use information the [childrenBuilder] have access to in this visitor.
+///
+/// ```dart
+///     final List<int> nestedRowsAmount = [];
+///     return FullPassBuilder(layouterVisitor: (context, layouter) {
+///      // ...
+///         return Size(...);
+///     }, childrenBuilder: (context, constraints) {
+///         final List<List<Widget>> widgets = obtainWidgetsFromSomewhere(context);
+///         widgets.forEach((w) => nestedRowsAmount.add(w.length));
+///       return [...];
+///     });
+/// ```
+///
 /// {@endtemplate}
 typedef LayouterVisitor = Size Function(Layouter layouter);
 
-typedef ChildrenBuilder = List<Widget> Function(BuildContext context, BoxConstraints constraints);
+typedef ChildrenBuilder = List<Widget> Function(
+    BuildContext context, BoxConstraints constraints);
 
-typedef ChildBuilder = Widget Function(BuildContext context, BoxConstraints constraints);
+typedef ChildBuilder = Widget Function(
+    BuildContext context, BoxConstraints constraints);
 
+/// A widget that makes it much easier to create custom layouts. Some of your
+/// layouts might require siblings, or children geometries to be present, but
+/// to get that, you'd usually have to go through all the boilerplate and imperative
+/// code with [GlobalKey] and [addPostFrameCallback]. With this, all you need
+/// is to just invoke the FullPassBuilder constructor, and all the information
+/// you need will just be there for you.
+///
 /// This widget is a wrapper over the the [ChildrenGeometriesProvidedBuilder].
 ///
 /// It takes the constraints from [LayoutBuilder] and the children geometries from
 /// [ChildrenGeometriesProvidedBuilder] and create a widget builder that has access
 /// to all details reported to it by both the parents and children.
-///
-/// The information this widget has makes it possible to create any layout.
 ///
 /// To create a flex-like layout that position its children evenly, you can do
 /// something like this.
@@ -69,10 +91,17 @@ typedef ChildBuilder = Widget Function(BuildContext context, BoxConstraints cons
 ///
 /// For more advanced examples, take a look at the [FullPassBuilderFactory] class.
 /// ```
+///
+/// If you need something text-related [like this](https://www.youtube.com/watch?v=cq34RWXegM8),
+/// this widget won't solve your problem. Text-related widget position requires
+/// additional calculations and the custom render object itself will have to also
+/// render the texts. I want this widget to be as generic as possible.
 class FullPassBuilder extends StatelessWidget {
+  /// Same as LayouterVisitor, but with context
+  ///
+  /// {@macro layouter_visitor}
   final LayouterVisitorWithContext layouterVisitor;
-  final ChildrenBuilder
-      childrenBuilder;
+  final ChildrenBuilder childrenBuilder;
 
   const FullPassBuilder(
       {required this.layouterVisitor, required this.childrenBuilder, Key? key})
