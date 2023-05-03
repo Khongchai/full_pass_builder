@@ -1,4 +1,4 @@
-import 'package:example/full_pass_builder_factory.dart';
+import 'package:example/full_pass_builder_examples.dart';
 import 'package:flutter/material.dart';
 
 void main() {
