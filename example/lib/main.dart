@@ -18,49 +18,58 @@ class _MyAppState extends State<MyApp> {
   ];
 
   late final List<Widget Function()> _examples = [
-    () => FullPassBuilderFactory.verticalMasonry(
+    () => FullPassBuilderExamples.verticalMasonry(
         verticalGap: 8,
         horizontalGap: 8,
-        masonryBuilder: (context) {
-          final screenWidth = MediaQuery.of(context).size.width;
+        masonryBuilder: (context, constraints) {
           return [
             [
               Container(
-                  width: screenWidth / 3, height: 300, color: Colors.black12),
+                  width: constraints.maxWidth / 3, height: 200, color: Colors.black),
               Container(
-                  width: screenWidth / 3,
+                  width: constraints.maxWidth / 3,
                   height: 200,
                   color: Colors.pinkAccent),
-              Container(width: screenWidth / 3, height: 300, color: Colors.red),
+              Container(width: constraints.maxWidth / 3, height: 300, color: Colors.red),
               Container(
-                  width: screenWidth / 3, height: 100, color: Colors.lightBlue),
+                  width: constraints.maxWidth / 3, height: 100, color: Colors.lightBlue),
+              Container(
+                  width: constraints.maxWidth / 3, height: 100, color: Colors.lightGreen),
             ],
             [
-              Container(width: screenWidth / 3, height: 300, color: Colors.red),
+              Container(width: constraints.maxWidth / 3, height: 300, color: Colors.red),
               Container(
-                  width: screenWidth / 3,
+                  width: constraints.maxWidth / 3,
                   height: 200,
                   color: Colors.pinkAccent),
               Container(
-                  width: screenWidth / 3, height: 300, color: Colors.black12),
+                  width: constraints.maxWidth / 3, height: 300, color: Colors.black12),
               Container(
-                  width: screenWidth / 3, height: 100, color: Colors.lightBlue),
+                  width: constraints.maxWidth / 3, height: 100, color: Colors.lightBlue),
+              Container(
+                  width: constraints.maxWidth / 3, height: 100, color: Colors.black),
             ],
             [
               Container(
-                  width: screenWidth / 3,
-                  height: 300,
+                  width: constraints.maxWidth / 3,
+                  height: 255,
                   color: Colors.purpleAccent),
               Container(
-                  width: screenWidth / 3,
-                  height: 200,
+                  width: constraints.maxWidth / 3,
+                  height: 100,
                   color: Colors.pinkAccent),
               Container(
-                  width: screenWidth / 3, height: 100, color: Colors.lightBlue),
+                  width: constraints.maxWidth / 3, height: 100, color: Colors.greenAccent),
+              Container(
+                  width: constraints.maxWidth / 3, height: 50, color: Colors.lightBlue),
+              Container(
+                  width: constraints.maxWidth / 3, height: 110, color: Colors.yellow),
+              Container(
+                  width: constraints.maxWidth / 3, height: 330, color: Colors.brown),
             ]
           ];
         }),
-    () => FullPassBuilderFactory.stickyFooter(
+    () => FullPassBuilderExamples.stickyFooter(
       additonalBottomPadding: kBottomNavigationBarHeight,
       childrenBuilder: (context, constraints) => [
         ..._textList,
@@ -76,7 +85,7 @@ class _MyAppState extends State<MyApp> {
           },
           child: const Text("Sticky Button::Click to Add More Text")),
     ),
-    () => FullPassBuilderFactory.intrinsicHeight(
+    () => FullPassBuilderExamples.intrinsicHeight(
       space: 16,
       topLeft: Container(
         color: Colors.red,

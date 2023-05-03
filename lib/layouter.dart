@@ -43,7 +43,7 @@ class Layouter {
 
   void forEachChild(
       void Function(BoxConstraints constraints, Size size,
-              _OffsetWrapper offset, int childIndex)
+              OffsetWrapper offset, int childIndex)
           callback) {
     assert(
         childrenSizes.length == childrenParentData.length,
@@ -53,16 +53,16 @@ class Layouter {
         i < childrenSizes.length && j < childrenParentData.length;
         i++, j++) {
       callback(constraints, childrenSizes[i],
-          _OffsetWrapper(childrenParentData[i]), i); // i should be equals to j
+          OffsetWrapper(childrenParentData[i]), i); // i should be equals to j
     }
   }
 }
 
 /// Expose only the offset property of the parent to be externally set or get.
-class _OffsetWrapper {
+class OffsetWrapper {
   final ChildrenGeometriesProviderParentData _parentData;
 
-  const _OffsetWrapper(this._parentData);
+  const OffsetWrapper(this._parentData);
 
   Offset get get => _parentData.offset;
 

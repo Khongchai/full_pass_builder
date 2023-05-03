@@ -6,8 +6,8 @@ import 'package:full_pass_builder/full_pass_builder.dart';
 
 /// Sets of layout templates that conforms to the [LayouterVisitorWithContext] interface.
 ///
-class FullPassBuilderFactory {
-  FullPassBuilderFactory._();
+class FullPassBuilderExamples {
+  FullPassBuilderExamples._();
 
   /// A basic example of how you can achieve the [spaceEvenly] of the flex layout.
   ///
@@ -68,31 +68,86 @@ class FullPassBuilderFactory {
   }
 
   /// Your standard masonry-style UI.
+  ///
+  /// The constraints parameter passed to the masonryBuilder is the final
+  /// constraints after having subtracted both the horizontal and verticalGap.
+  ///
+  /// This is a simple n-row masonry. More complex layouts like masonry grids
+  /// can also be created...if you have the time...and the energy.
   static FullPassBuilder verticalMasonry(
       {required double verticalGap,
       required double horizontalGap,
-      required List<List<Widget>> Function(BuildContext context)
+      required List<List<Widget>> Function(
+              BuildContext context, BoxConstraints constraints)
           masonryBuilder}) {
-    // Each integer represents the number of member in a stack.
-    final List<int> stackSizes = [];
+    // Each integer represents the number of member in a column.
+    final List<int> columnSizes = [];
     return FullPassBuilder(layouterVisitor: (context, layouter) {
-      // Stack is like either a row or a column
-      int stackIndex = 0;
-      int childrenCountInPreviousStacks = 0;
+      int columnIndex = 0;
+      int childrenCountInPreviousColumns = 0;
+      double maxItemWidth = 0;
+
+      // Usable states
+      List<double> maxWidthInEachColumn =
+          List.filled(columnSizes.length, 0, growable: false);
+      List<List<OffsetWrapper>> offsetsByColumn =
+          List.generate(columnSizes.length, (_) => [], growable: false);
+      List<List<Size>> sizesByColumn =
+          List.generate(columnSizes.length, (_) => [], growable: false);
+
       layouter.forEachChild((constraints, size, offset, childIndex) {
-        // Whether or not we have reached a new masonry stack.
-        if (stackSizes[stackIndex] - 1 <=
-            (childIndex - childrenCountInPreviousStacks)) {
-          childrenCountInPreviousStacks += stackSizes[stackIndex];
-          // TODO @khongchai
-          // Do something before resetting the stack index.
-          stackIndex++;
+        maxItemWidth = max(size.width, maxItemWidth);
+        sizesByColumn[columnIndex].add(size);
+        offsetsByColumn[columnIndex].add(offset);
+        // Whether or not we have reached a new masonry column.
+
+        if (columnSizes[columnIndex] - 1 <=
+            (childIndex - childrenCountInPreviousColumns)) {
+          // We have! Reset the state for the next column.
+          maxWidthInEachColumn[columnIndex] = maxItemWidth;
+          childrenCountInPreviousColumns += columnSizes[columnIndex];
+          columnIndex++;
         }
       });
-      return MediaQuery.of(context).size;
+
+      assert(
+          sizesByColumn.length &
+                  offsetsByColumn.length &
+                  maxWidthInEachColumn.length ==
+              columnSizes.length,
+          "Sizes of all columns should be the same.");
+
+      double sizeY = MediaQuery.of(context).size.height;
+      double maxWidthInPreviousColumn = 0;
+      for (int i = 0; i < columnSizes.length; i++) {
+        maxWidthInPreviousColumn +=
+            i - 1 == -1 ? 0 : maxWidthInEachColumn[i - 1];
+        final currentOffsets = offsetsByColumn[i];
+        final currentSizes = sizesByColumn[i];
+
+        double columnHeightSoFar = 0;
+        for (int j = 0; j < currentOffsets.length; j++) {
+          double xOffset = 0;
+          double yOffset = 0;
+
+          xOffset += maxWidthInPreviousColumn + horizontalGap * i;
+          yOffset += columnHeightSoFar;
+
+          currentOffsets[j].set = Offset(xOffset, yOffset);
+          columnHeightSoFar += currentSizes[j].height + verticalGap;
+          sizeY = max(columnHeightSoFar, sizeY);
+        }
+      }
+
+      return Size(MediaQuery.of(context).size.width, sizeY);
     }, childrenBuilder: (context, constraints) {
-      final widgets = masonryBuilder(context);
-      widgets.forEach((e) => stackSizes.add(e.length));
+      final widgets = masonryBuilder(
+          context,
+          constraints.copyWith(
+            maxWidth: constraints.maxWidth - horizontalGap,
+            maxHeight: constraints.maxHeight - verticalGap,
+          ));
+      widgets.forEach((e) => columnSizes.add(e.length));
       return widgets.expand((element) => element).toList(growable: false);
     });
   }
@@ -102,9 +157,8 @@ class FullPassBuilderFactory {
   /// Just an example of a custom layout calculation. Using the IntrinsicHeight,
   /// as is shown in the video above might be more convenient.
   ///
-  /// Important note:
-  /// Even though this one does not require a speculative layout and does not
-  /// cause O(n^2) layout time, it might cause O(n^2) development time :p
+  /// However, this one does not require a speculative layout and does not cause O(n^2) layout time.
+  /// (but it might cause O(n^2) development time :p)
   static FullPassBuilder intrinsicHeight({
     required Widget topLeft,
     required Widget center,
@@ -125,11 +179,13 @@ class FullPassBuilderFactory {
             offsetY = screenSize.height / 2 - size.height / 2;
 
             if (childIndex == topLeftIndex) {
-              offsetX -= layouter.maxRectangle.width / 2 + size.width / 2 + space;
-              offsetY -= layouter.maxRectangle.height / 2 - size.height /2;
+              offsetX -=
+                  layouter.maxRectangle.width / 2 + size.width / 2 + space;
+              offsetY -= layouter.maxRectangle.height / 2 - size.height / 2;
             } else if (childIndex == bottomRightIndex) {
-              offsetX += layouter.maxRectangle.width / 2 + size.width / 2 + space;
-              offsetY += layouter.maxRectangle.height / 2 - size.height /2;
+              offsetX +=
+                  layouter.maxRectangle.width / 2 + size.width / 2 + space;
+              offsetY += layouter.maxRectangle.height / 2 - size.height / 2;
             }
 
             offset.set = Offset(offsetX, offsetY);
@@ -137,7 +193,6 @@ class FullPassBuilderFactory {
           return screenSize;
         },
         childrenBuilder: (context, constraints) =>
-        [topLeft, center, bottomRight]
-        );
+            [topLeft, center, bottomRight]);
   }
 }
