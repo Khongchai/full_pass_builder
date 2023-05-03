@@ -196,22 +196,26 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
 
   @override
   void performLayout() {
-    size = computeDryLayout(constraints);
+    size = _layout(constraints, ChildLayoutHelper.layoutChild);
   }
 
   @override
   Size computeDryLayout(BoxConstraints constraints) {
+    return _layout(constraints, ChildLayoutHelper.dryLayoutChild);
+  }
+
+  Size _layout(BoxConstraints constraints, ChildLayouter childLayouter) {
     final List<double> minRectangle =
-        List.filled(2, double.infinity, growable: false);
+    List.filled(2, double.infinity, growable: false);
     final List<double> maxRectangle = List.filled(2, 0, growable: false);
     final List<Size> childrenSizes =
-        List.filled(childCount, Size.zero, growable: false);
+    List.filled(childCount, Size.zero, growable: false);
     final List<ChildrenGeometriesProviderParentData> parentData = List.filled(
         childCount, ChildrenGeometriesProviderParentData(),
         growable: false);
 
     forEachChild((child, i) {
-      final size = ChildLayoutHelper.layoutChild(child, constraints);
+      final size = childLayouter(child, constraints);
 
       minRectangle[0] = min(minRectangle[0], size.width);
       minRectangle[1] = min(minRectangle[1], size.height);
@@ -229,6 +233,7 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
         constraints: constraints,
         childrenSizes: childrenSizes,
         childrenParentData: parentData)));
+
   }
 
   @override
