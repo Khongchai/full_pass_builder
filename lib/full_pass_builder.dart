@@ -2,7 +2,6 @@ library full_pass_builder;
 
 // TODO @khongchai separate exports into a separate file.
 export "package:full_pass_builder/full_pass_builder.dart";
-export "package:full_pass_builder/full_pass_builder_factory.dart";
 
 import 'dart:math';
 
@@ -112,7 +111,7 @@ class FullPassBuilder extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) => ChildrenGeometriesProvidedBuilder(
           children: childrenBuilder(context, constraints),
-          layoutAndSizing: (layouter) => layouterVisitor(context, layouter)),
+          layouterVisitor: (layouter) => layouterVisitor(context, layouter)),
     );
   }
 }
@@ -125,28 +124,28 @@ class FullPassBuilder extends StatelessWidget {
 /// wish.
 class ChildrenGeometriesProvidedBuilder extends MultiChildRenderObjectWidget {
   /// {@macro layouter_visitor}
-  final LayouterVisitor layoutAndSizing;
+  final LayouterVisitor layouterVisitor;
 
   ChildrenGeometriesProvidedBuilder(
-      {required List<Widget> children, required this.layoutAndSizing, Key? key})
+      {required List<Widget> children, required this.layouterVisitor, Key? key})
       : super(key: key, children: children);
 
   @override
   RenderObject createRenderObject(BuildContext context) {
     return ChildrenGeometriesProviderRenderObject(
-        layoutCallback: layoutAndSizing);
+        layoutVisitor: layouterVisitor);
   }
 
   @override
   void updateRenderObject(BuildContext context,
       ChildrenGeometriesProviderRenderObject renderObject) {
-    renderObject.layoutCallback = layoutAndSizing;
+    renderObject.layoutVisitor = layouterVisitor;
   }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(StringProperty('positioner', layoutAndSizing.toString()));
+    properties.add(StringProperty('layouterVisitor', layouterVisitor.toString()));
     properties.add(StringProperty('children', children.toString()));
   }
 }
@@ -161,9 +160,9 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
         RenderBoxContainerDefaultsMixin<RenderBox,
             ChildrenGeometriesProviderParentData>,
         DebugOverflowIndicatorMixin {
-  LayouterVisitor layoutCallback;
+  LayouterVisitor layoutVisitor;
 
-  ChildrenGeometriesProviderRenderObject({required this.layoutCallback});
+  ChildrenGeometriesProviderRenderObject({required this.layoutVisitor});
 
   @override
   double computeMinIntrinsicWidth(double height) => 0.0;
@@ -223,7 +222,7 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
       parentData[i] = child.parentData as ChildrenGeometriesProviderParentData;
     });
 
-    return constraints.constrain(layoutCallback(Layouter(
+    return constraints.constrain(layoutVisitor(Layouter(
         minRectangle: Size(minRectangle[0], minRectangle[1]),
         maxRectangle: Size(maxRectangle[0], maxRectangle[1]),
         constraints: constraints,

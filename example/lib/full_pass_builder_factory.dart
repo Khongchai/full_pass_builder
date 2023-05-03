@@ -1,18 +1,12 @@
 import 'dart:math';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:full_pass_builder/full_pass_builder.dart';
-
-/// You can use extension to extend this class, rather than create your own
-/// factory.
-final FullPassBuilderFactory fullPassBuilderFactory =
-    FullPassBuilderFactory._instance;
 
 /// Sets of layout templates that conforms to the [LayouterVisitorWithContext] interface.
 ///
 class FullPassBuilderFactory {
-  static final FullPassBuilderFactory _instance = FullPassBuilderFactory._();
-
   FullPassBuilderFactory._();
 
   /// A basic example of how you can achieve the [spaceEvenly] of the flex layout.
@@ -21,7 +15,7 @@ class FullPassBuilderFactory {
   /// non-flexbile geometries of some children before setting the offsets.
   ///
   /// The horizontal equivalent can be done by swapping the x and y axes.
-  FullPassBuilder verticalSpaceEvenly(
+  static FullPassBuilder verticalSpaceEvenly(
       {required ChildrenBuilder childrenBuilder}) {
     return FullPassBuilder(
         layouterVisitor: (context, layouter) {
@@ -38,8 +32,9 @@ class FullPassBuilderFactory {
   }
 
   /// https://css-tricks.com/couple-takes-sticky-footer/
-  FullPassBuilder stickyFooter(
+  static FullPassBuilder stickyFooter(
       {required ChildrenBuilder childrenBuilder,
+      required double additonalBottomPadding,
       required ChildBuilder stickyChildBuilder}) {
     return FullPassBuilder(
         layouterVisitor: (context, layouter) {
@@ -50,7 +45,8 @@ class FullPassBuilderFactory {
             if (layouter.childCount - 1 == index) {
               final fixedBottom =
                   mdof.size.height - mdof.padding.top - size.height;
-              final contentBottom = heightSoFar + mdof.padding.top;
+              final contentBottom =
+                  heightSoFar + mdof.padding.top - additonalBottomPadding;
               offset.set = Offset(0, (max(fixedBottom, contentBottom)));
             } else {
               offset.set = Offset(0, heightSoFar);
@@ -72,7 +68,7 @@ class FullPassBuilderFactory {
   }
 
   /// Your standard masonry-style UI.
-  FullPassBuilder verticalMasonry(
+  static FullPassBuilder verticalMasonry(
       {required double verticalGap,
       required double horizontalGap,
       required List<List<Widget>> Function(BuildContext context)
@@ -101,13 +97,47 @@ class FullPassBuilderFactory {
     });
   }
 
-  // TODO @khongchai implement this and find out how to do rotation.
-  FullPassBuilder random(
-      {required Size bound,
-      required Offset center,
-      required List<Widget> Function(BuildContext context) childrenBuilder,
-      bool rotate = false}) {
+  /// https://www.youtube.com/watch?v=Si5XJ_IocEs
+  ///
+  /// Just an example of a custom layout calculation. Using the IntrinsicHeight,
+  /// as is shown in the video above might be more convenient.
+  ///
+  /// Important note:
+  /// Even though this one does not require a speculative layout and does not
+  /// cause O(n^2) layout time, it might cause O(n^2) development time :p
+  static FullPassBuilder intrinsicHeight({
+    required Widget topLeft,
+    required Widget center,
+    required Widget bottomRight,
+    required double space,
+  }) {
+    const topLeftIndex = 0;
+    const bottomRightIndex = 2;
     return FullPassBuilder(
-        layouterVisitor: layouterVisitor, childrenBuilder: childrenBuilder);
+        layouterVisitor: (context, layouter) {
+          final screenSize = MediaQuery.of(context).size;
+          layouter.forEachChild((constraints, size, offset, childIndex) {
+            double offsetX = 0;
+            double offsetY = 0;
+
+            // Center
+            offsetX = screenSize.width / 2 - size.width / 2;
+            offsetY = screenSize.height / 2 - size.height / 2;
+
+            if (childIndex == topLeftIndex) {
+              offsetX -= layouter.maxRectangle.width / 2 + size.width / 2 + space;
+              offsetY -= layouter.maxRectangle.height / 2 - size.height /2;
+            } else if (childIndex == bottomRightIndex) {
+              offsetX += layouter.maxRectangle.width / 2 + size.width / 2 + space;
+              offsetY += layouter.maxRectangle.height / 2 - size.height /2;
+            }
+
+            offset.set = Offset(offsetX, offsetY);
+          });
+          return screenSize;
+        },
+        childrenBuilder: (context, constraints) =>
+        [topLeft, center, bottomRight]
+        );
   }
 }
