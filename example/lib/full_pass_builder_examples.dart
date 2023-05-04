@@ -55,7 +55,7 @@ class FullPassBuilderExamples {
           });
 
           return Size(
-              layouter.maxRectangle.width,
+              layouter.constraints.maxWidth,
               max(
                   layouter.childrenParentData.last.offset.dy +
                       layouter.childrenSizes.last.height,
@@ -71,9 +71,6 @@ class FullPassBuilderExamples {
   ///
   /// The constraints parameter passed to the masonryBuilder is the final
   /// constraints after having subtracted both the horizontal and verticalGap.
-  ///
-  /// This is a simple n-row masonry. More complex layouts like masonry grids
-  /// can also be created...if you have the time...and the energy.
   static FullPassBuilder verticalMasonry(
       {required double verticalGap,
       required double horizontalGap,
@@ -152,6 +149,86 @@ class FullPassBuilderExamples {
     });
   }
 
+  /// A more complex masonry layout with masonry grids.
+  ///
+  /// Again, this does not require a speculative layout pass. All layouts are
+  /// done within a single pass. Just with a lot of manual calculation.
+  ///
+  /// Warning. This is just a demo. Using this in prod will result in your
+  /// and your users' demise!
+  static FullPassBuilder masonryGrid({
+    // In pixels
+    required double verticalGap,
+    // In pixels
+    required double horizontalGap,
+    required List<MasonryGrid> masonry,
+    required int maxColumn,
+  }) {
+    return FullPassBuilder(
+        layouterVisitor: (context, layouter) {
+          double sizeY = MediaQuery.of(context).size.height;
+
+          // Row
+          double xPointer = 0;
+          layouter.forEachChild((constraints, size, offset, childIndex) {
+            offset.set = Offset(xPointer, 0);
+
+            xPointer =
+                (xPointer + size.width + horizontalGap) % constraints.maxWidth;
+          });
+
+          // Column
+          final List<double> yOffsetInEachColumnSoFar =
+              List.filled(maxColumn, 0);
+          final unit = layouter.constraints.maxWidth / maxColumn;
+          int columnIndex = 0;
+          layouter.forEachChild((constraints, size, offset, childIndex) {
+            offset.set =
+                Offset(offset.get.dx, yOffsetInEachColumnSoFar[columnIndex]);
+
+            // ceil because a part of width is possibly subtracted by
+            // horizontalWidth amount
+            final columnSpan = (size.width / unit).ceil();
+            assert(columnSpan <= maxColumn, "Total span should not be more than maxColumn");
+
+            // If overflow, wrap around to 0.
+            if (columnIndex + columnSpan > maxColumn) {
+              columnIndex = 0;
+              offset.set = Offset(0, yOffsetInEachColumnSoFar[columnIndex]);
+            }
+
+            // Use a column span to find out the
+            // item width spans how many columns.
+            for (int i = columnIndex; i < columnIndex + columnSpan; i++) {
+              yOffsetInEachColumnSoFar[i] += size.height + verticalGap;
+            }
+
+            columnIndex = (columnIndex + columnSpan) % maxColumn;
+          });
+
+          return Size(
+              MediaQuery.of(context).size.width, max(yOffsetInEachColumnSoFar.reduce((value, element) => max(value, element)), sizeY));
+        },
+        // Constrain based on the grid properties.
+        // Not applying the horizontal gap just yet.
+        childrenConstrainer: (originalConstraints, children) {
+          final List<BoxConstraints> constraints =
+              List.filled(children.length, originalConstraints);
+          final unit = originalConstraints.maxWidth / 3;
+          for (int i = 0; i < children.length; i++) {
+            final currentGrid = masonry[i];
+            final gridWidth = unit * currentGrid.columnUnitCount;
+            final gridHeight = unit * currentGrid.rowUnitCount;
+            constraints[i] = originalConstraints.copyWith(
+              maxWidth: gridWidth - horizontalGap,
+              maxHeight: gridHeight - verticalGap,
+            );
+          }
+          return constraints;
+        },
+        childrenBuilder: (context, constraints) => masonry);
+  }
+
   /// https://www.youtube.com/watch?v=Si5XJ_IocEs
   ///
   /// Just an example of a custom layout calculation. Using the IntrinsicHeight,
@@ -194,5 +271,31 @@ class FullPassBuilderExamples {
         },
         childrenBuilder: (context, constraints) =>
             [topLeft, center, bottomRight]);
+  }
+}
+
+final _random = Random();
+
+/// Just a simple, randomly colored grid.
+class MasonryGrid extends StatelessWidget {
+  final int rowUnitCount;
+  final int columnUnitCount;
+
+  MasonryGrid({
+    Key? key,
+    required this.rowUnitCount,
+    required this.columnUnitCount,
+  }) : super(key: key);
+
+  final _randColor = Color.fromRGBO(
+      _random.nextInt(256), _random.nextInt(256), _random.nextInt(256), 1.0);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: _randColor,
+      width: double.infinity,
+      height: double.infinity,
+    );
   }
 }

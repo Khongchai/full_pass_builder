@@ -31,8 +31,10 @@ typedef LayouterVisitorWithContext = Size Function(
 /// of getting the layout details post-render, all details are obtained within
 /// the same frame.
 ///
-/// This is guaranteed to be called after [childrenBuilder], this means that you
-/// can use information the [childrenBuilder] have access to in this visitor.
+/// The call order is [childrenBuilder] -> [childrenConstrainer] -> [layouterVisitor]
+///
+/// This means that you can use information the [childrenBuilder] have access to
+/// in the visitor.
 ///
 /// ```dart
 ///     final List<int> nestedRowsAmount = [];
@@ -54,6 +56,16 @@ typedef ChildrenBuilder = List<Widget> Function(
 
 typedef ChildBuilder = Widget Function(
     BuildContext context, BoxConstraints constraints);
+
+/// Cheat by modifying the constraints for each of the children.
+///
+/// The function will receive the constraints imposed by the parent and a list of
+/// render boxes of the children of that parent. The function should return a list
+/// of new constraints whose length should match the second parameter of this
+/// function.
+typedef ChildrenConstrainer = List<BoxConstraints> Function(
+    BoxConstraints parentConstraints,
+    List<RenderBox> childrenRenderBoxesBeforeApplyingConstraints);
 
 /// A widget that makes it much easier to create custom layouts. Some of your
 /// layouts might require siblings, or children geometries to be present, but
@@ -102,9 +114,13 @@ class FullPassBuilder extends StatelessWidget {
   /// {@macro layouter_visitor}
   final LayouterVisitorWithContext layouterVisitor;
   final ChildrenBuilder childrenBuilder;
+  final ChildrenConstrainer? childrenConstrainer;
 
   const FullPassBuilder(
-      {required this.layouterVisitor, required this.childrenBuilder, Key? key})
+      {required this.layouterVisitor,
+      required this.childrenBuilder,
+      this.childrenConstrainer,
+      Key? key})
       : super(key: key);
 
   @override
@@ -112,6 +128,7 @@ class FullPassBuilder extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) => ChildrenGeometriesProvidedBuilder(
           children: childrenBuilder(context, constraints),
+          childrenConstrainer: childrenConstrainer,
           layouterVisitor: (layouter) => layouterVisitor(context, layouter)),
     );
   }
@@ -126,27 +143,34 @@ class FullPassBuilder extends StatelessWidget {
 class ChildrenGeometriesProvidedBuilder extends MultiChildRenderObjectWidget {
   /// {@macro layouter_visitor}
   final LayouterVisitor layouterVisitor;
+  final ChildrenConstrainer? childrenConstrainer;
 
   ChildrenGeometriesProvidedBuilder(
-      {required List<Widget> children, required this.layouterVisitor, Key? key})
+      {required List<Widget> children,
+      required this.layouterVisitor,
+      this.childrenConstrainer,
+      Key? key})
       : super(key: key, children: children);
 
   @override
   RenderObject createRenderObject(BuildContext context) {
     return ChildrenGeometriesProviderRenderObject(
-        layoutVisitor: layouterVisitor);
+        layoutVisitor: layouterVisitor,
+        childrenConstrainer: childrenConstrainer);
   }
 
   @override
   void updateRenderObject(BuildContext context,
       ChildrenGeometriesProviderRenderObject renderObject) {
     renderObject.layoutVisitor = layouterVisitor;
+    renderObject.childrenConstrainer = childrenConstrainer;
   }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(StringProperty('layouterVisitor', layouterVisitor.toString()));
+    properties
+        .add(StringProperty('layouterVisitor', layouterVisitor.toString()));
     properties.add(StringProperty('children', children.toString()));
   }
 }
@@ -162,8 +186,10 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
             ChildrenGeometriesProviderParentData>,
         DebugOverflowIndicatorMixin {
   LayouterVisitor layoutVisitor;
+  ChildrenConstrainer? childrenConstrainer;
 
-  ChildrenGeometriesProviderRenderObject({required this.layoutVisitor});
+  ChildrenGeometriesProviderRenderObject(
+      {required this.layoutVisitor, this.childrenConstrainer});
 
   @override
   double computeMinIntrinsicWidth(double height) => 0.0;
@@ -206,16 +232,34 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
 
   Size _layout(BoxConstraints constraints, ChildLayouter childLayouter) {
     final List<double> minRectangle =
-    List.filled(2, double.infinity, growable: false);
+        List.filled(2, double.infinity, growable: false);
     final List<double> maxRectangle = List.filled(2, 0, growable: false);
     final List<Size> childrenSizes =
-    List.filled(childCount, Size.zero, growable: false);
+        List.filled(childCount, Size.zero, growable: false);
     final List<ChildrenGeometriesProviderParentData> parentData = List.filled(
         childCount, ChildrenGeometriesProviderParentData(),
         growable: false);
 
+    // constrainer
+    List<BoxConstraints>? childrenConstraints;
+    if (childrenConstrainer != null) {
+      final List<RenderBox> children = [];
+      forEachChild((child, index) {
+        children.add(child);
+      });
+
+      childrenConstraints = childrenConstrainer!.call(constraints, children);
+      assert(childrenConstraints.length == childCount);
+    }
+
+    // layouter
     forEachChild((child, i) {
-      final size = childLayouter(child, constraints);
+      late final Size size;
+      if (childrenConstraints != null) {
+        size = childLayouter(child, childrenConstraints[i]);
+      } else {
+        size = childLayouter(child, constraints);
+      }
 
       minRectangle[0] = min(minRectangle[0], size.width);
       minRectangle[1] = min(minRectangle[1], size.height);
@@ -233,7 +277,6 @@ class ChildrenGeometriesProviderRenderObject extends RenderBox
         constraints: constraints,
         childrenSizes: childrenSizes,
         childrenParentData: parentData)));
-
   }
 
   @override

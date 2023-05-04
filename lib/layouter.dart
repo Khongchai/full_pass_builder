@@ -23,10 +23,14 @@ class Layouter {
   /// The max rectangle is the largest value for both x and y of any child
   /// combined, which is Rect(20, 20).
   final Size maxRectangle;
+
+  /// The constraints passed from the parent.
   final BoxConstraints constraints;
 
   // Combining sizes and offsets together would make the API very confusing,
   // because one can be re-assigned a new value (offset) and one can't (size).
+  // Separating them into two separate list made more sense (for me, ofc) in this
+  // context.
   final List<Size> childrenSizes;
   final List<ChildrenGeometriesProviderParentData> childrenParentData;
 
@@ -58,7 +62,14 @@ class Layouter {
   }
 }
 
-/// Expose only the offset property of the parent to be externally set or get.
+/// A wrapper to help set the offset on the parent data
+///
+/// ```dart
+///   // setter
+///   offset.set = Offset(x, y);
+///   // getter
+///   final newOffset = Offset(offset.get.dx, 0);
+/// ```
 class OffsetWrapper {
   final ChildrenGeometriesProviderParentData _parentData;
 
