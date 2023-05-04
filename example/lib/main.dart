@@ -17,6 +17,7 @@ class _MyAppState extends State<MyApp> {
     const Text("Hello"),
   ];
 
+  // Examples of APIs you can create with the FullPassBuilder
   late final List<Widget Function()> _examples = [
     () => FullPassBuilderExamples.masonryGrid(
           verticalGap: 8,
@@ -166,7 +167,7 @@ class _MyAppState extends State<MyApp> {
               },
               child: const Text("Sticky Button::Click to Add More Text")),
         ),
-    () => FullPassBuilderExamples.intrinsicHeight(
+    () => FullPassBuilderExamples.siblingsInformation(
           space: 16,
           topLeft: Container(
             color: Colors.red,

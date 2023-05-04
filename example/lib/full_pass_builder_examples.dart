@@ -6,6 +6,7 @@ import 'package:full_pass_builder/full_pass_builder.dart';
 
 /// Sets of layout templates that conforms to the [LayouterVisitorWithContext] interface.
 ///
+/// Do not use any of these examples in production.
 class FullPassBuilderExamples {
   FullPassBuilderExamples._();
 
@@ -166,6 +167,7 @@ class FullPassBuilderExamples {
   }) {
     return FullPassBuilder(
         layouterVisitor: (context, layouter) {
+          final unit = layouter.constraints.maxWidth / maxColumn;
           double sizeY = MediaQuery.of(context).size.height;
 
           // Row
@@ -173,14 +175,12 @@ class FullPassBuilderExamples {
           layouter.forEachChild((constraints, size, offset, childIndex) {
             offset.set = Offset(xPointer, 0);
 
-            xPointer =
-                (xPointer + size.width + horizontalGap) % constraints.maxWidth;
+            xPointer = (xPointer + size.width + horizontalGap) % constraints.maxWidth;
           });
 
           // Column
           final List<double> yOffsetInEachColumnSoFar =
               List.filled(maxColumn, 0);
-          final unit = layouter.constraints.maxWidth / maxColumn;
           int columnIndex = 0;
           layouter.forEachChild((constraints, size, offset, childIndex) {
             offset.set =
@@ -189,7 +189,8 @@ class FullPassBuilderExamples {
             // ceil because a part of width is possibly subtracted by
             // horizontalWidth amount
             final columnSpan = (size.width / unit).ceil();
-            assert(columnSpan <= maxColumn, "Total span should not be more than maxColumn");
+            assert(columnSpan <= maxColumn,
+                "Total span should not be more than maxColumn");
 
             // If overflow, wrap around to 0.
             if (columnIndex + columnSpan > maxColumn) {
@@ -207,14 +208,21 @@ class FullPassBuilderExamples {
           });
 
           return Size(
-              MediaQuery.of(context).size.width, max(yOffsetInEachColumnSoFar.reduce((value, element) => max(value, element)), sizeY));
+              MediaQuery.of(context).size.width,
+              max(
+                  yOffsetInEachColumnSoFar
+                      .reduce((value, element) => max(value, element)),
+                  sizeY));
         },
         // Constrain based on the grid properties.
         // Not applying the horizontal gap just yet.
         childrenConstrainer: (originalConstraints, children) {
           final List<BoxConstraints> constraints =
               List.filled(children.length, originalConstraints);
-          final unit = originalConstraints.maxWidth / 3;
+          final unit = originalConstraints.maxWidth / maxColumn;
+          // Gaps are to the right of each rectangle, and the right most gap should
+          // be ignored, otherwise we'll have the left side with no gap and the
+          // right side with gap.
           for (int i = 0; i < children.length; i++) {
             final currentGrid = masonry[i];
             final gridWidth = unit * currentGrid.columnUnitCount;
@@ -231,12 +239,15 @@ class FullPassBuilderExamples {
 
   /// https://www.youtube.com/watch?v=Si5XJ_IocEs
   ///
-  /// Just an example of a custom layout calculation. Using the IntrinsicHeight,
-  /// as is shown in the video above might be more convenient.
+  /// Just an example of a custom layout calculation using siblings layout
+  /// information.
   ///
-  /// However, this one does not require a speculative layout and does not cause O(n^2) layout time.
+  /// Using the IntrinsicHeight, as is shown in the video above may be more
+  /// convenient in most cases. However, this one does not require a speculative
+  /// layout and does not cause O(n^2) layout time.
+  ///
   /// (but it might cause O(n^2) development time :p)
-  static FullPassBuilder intrinsicHeight({
+  static FullPassBuilder siblingsInformation({
     required Widget topLeft,
     required Widget center,
     required Widget bottomRight,
@@ -293,7 +304,11 @@ class MasonryGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: _randColor,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.black),
+        color: _randColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
       width: double.infinity,
       height: double.infinity,
     );
