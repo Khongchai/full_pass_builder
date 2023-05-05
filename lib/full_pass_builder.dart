@@ -144,7 +144,7 @@ class ChildrenGeometriesProvidedBuilder extends MultiChildRenderObjectWidget {
   final LayouterVisitor layouterVisitor;
   final ChildrenConstrainer? childrenConstrainer;
 
-  const ChildrenGeometriesProvidedBuilder(
+  ChildrenGeometriesProvidedBuilder(
       {required List<Widget> children,
       required this.layouterVisitor,
       this.childrenConstrainer,
