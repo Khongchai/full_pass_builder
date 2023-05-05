@@ -2,7 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:full_pass_builder/full_pass_builder.dart';
 
 /// A class that helps manage the positioning of children as well as providing
-/// some vital information obtain during `performLayout`
+/// some vital information obtained during `performLayout`
 class Layouter {
   /// The minimum 2d size of any children.
   ///

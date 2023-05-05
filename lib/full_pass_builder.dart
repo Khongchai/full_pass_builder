@@ -1,6 +1,5 @@
 library full_pass_builder;
 
-// TODO @khongchai separate exports into a separate file.
 export "package:full_pass_builder/full_pass_builder.dart";
 export "package:full_pass_builder/layouter.dart";
 

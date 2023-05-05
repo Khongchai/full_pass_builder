@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:full_pass_builder/full_pass_builder.dart';
 
 /// Sets of layout templates that conforms to the [LayouterVisitorWithContext] interface.
@@ -42,7 +41,6 @@ class FullPassBuilderExamples {
           double heightSoFar = 0;
           layouter.forEachChild((constraints, size, offset, index) {
             final mdof = MediaQuery.of(context);
-            // Is last
             if (layouter.childCount - 1 == index) {
               final fixedBottom =
                   mdof.size.height - mdof.padding.top - size.height;
@@ -175,7 +173,8 @@ class FullPassBuilderExamples {
           layouter.forEachChild((constraints, size, offset, childIndex) {
             offset.set = Offset(xPointer, 0);
 
-            xPointer = (xPointer + size.width + horizontalGap) % constraints.maxWidth;
+            xPointer =
+                (xPointer + size.width + horizontalGap) % constraints.maxWidth;
           });
 
           // Column

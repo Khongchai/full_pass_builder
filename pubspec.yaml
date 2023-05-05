@@ -1,7 +1,7 @@
 name: full_pass_builder
-description: Like LayoutBuilder, but you get the widget's children as well.
-version: 0.0.1
-homepage: https://github.com/khongchai
+description: A simpler version of `CustomMultiChildLayout`
+version: 1.0.0
+homepage: https://github.com/Khongchai/full_pass_builder
 
 environment:
   sdk: ">=2.16.0 <3.0.0"
