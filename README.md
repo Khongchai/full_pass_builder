@@ -120,16 +120,17 @@ creating `CustomMultiChildLayout`, then this library is definitely not needed.
 Any custom layout you can imagine...unless it's text related. In that case, you might want to
 consider `CustomMultiChildLayout` (a downside of the abstraction I have chosen, sadly).
 
-A few examples
+## Some stuff I tried
+*The code for the layout below can be found in the example folder*
 
-## Masonry #1
-[masonry1](images/masonry1.png)
+### Masonry #1
+[masonry1](https://github.com/Khongchai/full_pass_builder/blob/main/images/masonry1.png)
 
-## Masonry #2
-[masonry2](images/masonry2.png)
+### Masonry #2
+[masonry2](https://github.com/Khongchai/full_pass_builder/blob/main/images/masonry2.png)
 
-## Using Siblings Information to Position the Widget
-[masonry2](images/siblings-information.png)
+### Using Siblings Information to Position the Widget
+[masonry2](https://github.com/Khongchai/full_pass_builder/blob/main/images/siblings-information.png)
 
 
 
