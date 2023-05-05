@@ -124,13 +124,13 @@ consider `CustomMultiChildLayout` (a downside of the abstraction I have chosen, 
 *The code for the layout below can be found in the example folder*
 
 ### Masonry #1
-[masonry1](https://github.com/Khongchai/full_pass_builder/blob/main/images/masonry1.png)
+![masonry1](https://github.com/Khongchai/full_pass_builder/blob/main/images/masonry1.png)
 
 ### Masonry #2
-[masonry2](https://github.com/Khongchai/full_pass_builder/blob/main/images/masonry2.png)
+![masonry2](https://github.com/Khongchai/full_pass_builder/blob/main/images/masonry2.png)
 
 ### Using Siblings Information to Position the Widget
-[masonry2](https://github.com/Khongchai/full_pass_builder/blob/main/images/siblings-information.png)
+![masonry2](https://github.com/Khongchai/full_pass_builder/blob/main/images/siblings-information.png)
 
 
 
