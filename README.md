@@ -95,18 +95,17 @@ View the `full_pass_builder_examples.dart` in the examples folder for more snipp
 
 ## Why I Made This
 
-While all of above has always been possible, it has always been done with a combo of `GlobalKey`
+While all of above has always been possible, a combo of `GlobalKey` and `addPostFrameCallback` has
+always been the fastest, but of course, that speed comes with its own tradeoffs of render two frames
+to get what you want. It also litters your declarative widget code with unnecessary imperative
+layout logic.
 
-+ `addPostFrameCallback`. Or create your own `RenderBox`. The first option litters your declarative
-  widget code with unnecessary imperative layout logic that also entails an overhead of 1 extra
-  render before the user sees your final result. The second option, while much better, requires a
-  deeper understanding of Flutter's internals and feels very boilerplatey. With this lib, all
-  important decision points are exposed to you and you just need only your math skills to solve your
-  problem.
-
-+ Another lesser known (at the time of writing) and pretty useful widget is
-  the `CustomMultiChildLayout` class. The class operates at a lower level, so everything this lib
-  can do, you can already do with `CustomMultiChildLayout`.
+The second option with `CustomMultiChildLayout` (or a bit more advanced, a custom `RenderBox`
+subclass), while much more flexible, requires a deeper understanding of Flutter's internals and
+feels very boilerplatey. With this lib, all important decision points are exposed to you and you
+just need only your math skills to solve your problem.
+*The class operates at a lower level, so everything this lib can do, you can already do
+with `CustomMultiChildLayout`.*
 
 I believe all libraries can match the level of API ergonomics `LayoutBuilder` provides when trying
 to expose lower level Flutter APIs. The API provided by `CustomMultiChildLayout` is still requires
